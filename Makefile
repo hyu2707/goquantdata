@@ -31,6 +31,9 @@ install:
 run:
 	make kafka
 	make airflow
+runaws:
+	setsid nohup make kafka &
+	setsid nohup make airflow &
 
 clean:
 	rm -rf $(ENV)
