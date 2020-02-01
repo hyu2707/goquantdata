@@ -85,6 +85,7 @@ research:
 # run CI 
 jenkins:
 	make clean
+	sudo apt update
 	sudo apt-get install mysql-server
 	sudo apt-get install libmysqlclient-dev
 	make install
