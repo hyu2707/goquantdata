@@ -17,7 +17,7 @@ default_args = {
     'email': cfg.airflow_email,
     'email_on_failure': True,
     'email_on_retry': True,
-    'retries': 100,
+    'retries': 100000,
     'retry_delay': timedelta(seconds=10),
     'provide_context': True,
     # 'queue': 'bash_queue',

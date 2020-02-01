@@ -16,7 +16,7 @@ TEST_LEVEL := unit
 
 LINT_FOLDER := controller entity gateway tests
 
-.PHONY: test_all airflow run
+.PHONY: test_all airflow run kafka
 
 $(ENV): $(ENV)/bin/pip
 	$(ENV)/bin/pip install --upgrade pip && \
@@ -73,6 +73,9 @@ airflow-clean:
 kafka:
 	zookeeper-server-start /usr/local/etc/kafka/zookeeper.properties &
 	kafka-server-start /usr/local/etc/kafka/server.properties &
+	sleep 5
+	./kafka/bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic bitmex_orderbook
+
 
 research:
 	ipython kernel install --name $(ENV)
