@@ -153,6 +153,19 @@ create kafka topics:
 setsid nohup make airflow &
 ```
 
+
+## Runbook
+1. New instance from existing AMI
+```bash
+source env/bin/activate
+sudo /etc/init.d/mysql start
+echo "" > nohup.out
+setsid nohup ./kafka/bin/zookeeper-server-start.sh kafka/config/zookeeper.properties &
+setsid nohup ./kafka/bin/kafka-server-start.sh kafka/config/server.properties &
+./kafka/bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic bitmex_orderbook
+setsid nohup make airflow &
+```
+
 ## Dev Guide
 ### Test
 ```bash
