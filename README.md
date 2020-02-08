@@ -153,6 +153,12 @@ create kafka topics:
 setsid nohup make airflow &
 ```
 
+8. Setup Cloudwatch
+add this in crontab (make sure instance already have couldwatch IAM, see guide [here](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/mon-scripts.html)):
+```
+crontab -e
+*/1 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --mem-used-incl-cache-buff --mem-util --disk-space-util --disk-path=/ --from-cron
+```
 
 ## Runbook
 1. New instance from existing AMI
@@ -164,6 +170,8 @@ setsid nohup ./kafka/bin/zookeeper-server-start.sh kafka/config/zookeeper.proper
 setsid nohup ./kafka/bin/kafka-server-start.sh kafka/config/server.properties &
 ./kafka/bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic bitmex_orderbook
 setsid nohup make airflow &
+crontab -e
+*/1 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --mem-used-incl-cache-buff --mem-util --disk-space-util --disk-path=/ --from-cron
 ```
 
 ## Dev Guide
