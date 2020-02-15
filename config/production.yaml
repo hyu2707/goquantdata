@@ -18,7 +18,7 @@ data:
   bitmex_orderbook:
     s3: "bitmex-orderbook"
     freq: 5
-    symbols: ["XBTUSD", "ETHUSD"]
+    symbols: ["XBTUSD", "ETHUSD", "ADAH20", "BCHH20", "EOSH20", "LTCH20", "TRXH20", "XRPH20"]
 
 kafka:
   bootstrap_servers: "localhost:9092"
