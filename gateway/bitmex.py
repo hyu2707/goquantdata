@@ -28,8 +28,6 @@ class BitmexGateway(object):
                              api_key=self.cfg.bitmex_id,
                              api_secret=self.cfg.bitmex_key)
 
-        logging.info("Instrument data: %s" % ws.get_instrument())
-
         kafka_producer = KafkaProducer(bootstrap_servers=[self.cfg.kafka_bootstrap_servers],
                                        value_serializer=lambda x:
                                        dumps(x).encode('utf-8'))
