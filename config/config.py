@@ -50,6 +50,10 @@ class TradingConfig(object):
         self.bitmex_orderbook_freq = self.config["data"]["bitmex_orderbook"]["freq"]
         self.bitmex_orderbook_symbols = self.config["data"]["bitmex_orderbook"]["symbols"]
         self.bitmex_orderbook_s3 = self.config["data"]["bitmex_orderbook"]["s3"]
+        self.ws_sleep_time = self.config["data"]["ws_sleep_time"]
+
+        if self.bitmex_orderbook_freq < self.ws_sleep_time:
+            raise ValueError("bitmex_orderbook_freq must larger than ws_sleep_time")
 
         # kafka
         self.kafka_topic_bitmex_orderbook = self.config["kafka"]["topic_bitmex_orderbook"]

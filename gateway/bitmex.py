@@ -23,13 +23,9 @@ class BitmexGateway(object):
         self.freq = self.cfg.bitmex_orderbook_freq
 
     def produce_orderbook_to_kafka(self, symbol):
-        ws_sleep_time = 1
-        if self.freq <= ws_sleep_time:
-            raise ValueError("freq must smaller than ws_sleep_time")
-        
         ws = BitMEXWebsocket(endpoint=self.BITMEX_ENDPOINT,
                              symbol=symbol,
-                             ws_sleep_time=1,
+                             ws_sleep_time=self.cfg.ws_sleep_time,
                              api_key=self.cfg.bitmex_id,
                              api_secret=self.cfg.bitmex_key)
 

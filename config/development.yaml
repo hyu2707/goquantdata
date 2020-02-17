@@ -15,9 +15,10 @@ alpaca:
 data:
   base_folder: "goquantdata"
   csv_folder: "raw_data_dev"
+  ws_sleep_time: 0.5  # to avoid high cpu, it must smaller than freq
   bitmex_orderbook:
     s3: "bitmex-orderbook"
-    freq: 10
+    freq: 5
     symbols: ["XBTUSD", "ETHUSD"]
 
 kafka:
