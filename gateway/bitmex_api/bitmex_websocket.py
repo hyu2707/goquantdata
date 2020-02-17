@@ -42,8 +42,6 @@ class BitMEXWebsocket:
         self.keys = {}
         self.exited = False
 
-        self.reconnect()
-
     def reconnect(self):
         # We can subscribe right in the connection querystring, so let's build that.
         # Subscribe to all pertinent endpoints
