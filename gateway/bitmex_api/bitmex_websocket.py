@@ -22,13 +22,14 @@ class BitMEXWebsocket:
     # Don't grow a table larger than this amount. Helps cap memory usage.
     MAX_TABLE_LEN = 200
 
-    def __init__(self, endpoint, symbol, api_key=None, api_secret=None):
+    def __init__(self, endpoint, symbol, ws_sleep_time, api_key=None, api_secret=None):
         '''Connect to the websocket and initialize data stores.'''
         self.logger = logging.getLogger(__name__)
         self.logger.debug("Initializing WebSocket.")
 
         self.endpoint = endpoint
         self.symbol = symbol
+        self.ws_sleep_time = ws_sleep_time
 
         if api_key is not None and api_secret is None:
             raise ValueError('api_secret is required if api_key is provided')
@@ -42,7 +43,6 @@ class BitMEXWebsocket:
         self.keys = {}
         self.exited = False
 
-    def reconnect(self):
         # We can subscribe right in the connection querystring, so let's build that.
         # Subscribe to all pertinent endpoints
         wsURL = self.__get_url()
@@ -240,6 +240,8 @@ class BitMEXWebsocket:
                         self.data[table].remove(item)
                 else:
                     raise Exception("Unknown action: %s" % action)
+            # to avoid high cpu
+            sleep(self.ws_sleep_time)
         except:
             self.logger.error(traceback.format_exc())
 

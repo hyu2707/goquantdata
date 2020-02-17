@@ -23,8 +23,13 @@ class BitmexGateway(object):
         self.freq = self.cfg.bitmex_orderbook_freq
 
     def produce_orderbook_to_kafka(self, symbol):
+        ws_sleep_time = 1
+        if self.freq <= ws_sleep_time:
+            raise ValueError("freq must smaller than ws_sleep_time")
+        
         ws = BitMEXWebsocket(endpoint=self.BITMEX_ENDPOINT,
                              symbol=symbol,
+                             ws_sleep_time=1,
                              api_key=self.cfg.bitmex_id,
                              api_secret=self.cfg.bitmex_key)
 
@@ -32,18 +37,14 @@ class BitmexGateway(object):
                                        value_serializer=lambda x:
                                        dumps(x).encode('utf-8'))
         # Run forever
-        while True:
+        while ws.ws.sock.connected:
             start_time = time.time()
-
-            ws.reconnect()
 
             # load orderbook data
             depth = ws.market_depth()
             orderbook = stream_bitmex_to_orderbook(depth, freq=self.freq)
             kafka_producer.send(self.cfg.kafka_topic_bitmex_orderbook,
                                 value=encode_kafka_msg(data=orderbook))
-            ws.exit()  # disconnect to reduce cpu usage
-
             run_time = time.time() - start_time
             sleep_time = max(0, self.freq - run_time)
             sleep(sleep_time)
