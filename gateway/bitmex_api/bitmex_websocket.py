@@ -42,16 +42,19 @@ class BitMEXWebsocket:
         self.keys = {}
         self.exited = False
 
+        self.reconnect()
+
+    def reconnect(self):
         # We can subscribe right in the connection querystring, so let's build that.
         # Subscribe to all pertinent endpoints
         wsURL = self.__get_url()
         self.logger.info("Connecting to %s" % wsURL)
-        self.__connect(wsURL, symbol)
+        self.__connect(wsURL, self.symbol)
         self.logger.info('Connected to WS.')
 
         # Connected. Wait for partials
-        self.__wait_for_symbol(symbol)
-        if api_key:
+        self.__wait_for_symbol(self.symbol)
+        if self.api_key:
             self.__wait_for_account()
         self.logger.info('Got all market data. Starting.')
 

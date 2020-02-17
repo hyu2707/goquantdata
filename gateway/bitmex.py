@@ -33,19 +33,23 @@ class BitmexGateway(object):
         kafka_producer = KafkaProducer(bootstrap_servers=[self.cfg.kafka_bootstrap_servers],
                                        value_serializer=lambda x:
                                        dumps(x).encode('utf-8'))
-
         # Run forever
-        while ws.ws.sock.connected:
-            try:
-                start_time = time.time()
-                depth = ws.market_depth()
-                orderbook = stream_bitmex_to_orderbook(depth, freq=self.freq)
-                kafka_producer.send(self.cfg.kafka_topic_bitmex_orderbook,
-                                    value=encode_kafka_msg(data=orderbook))
-                sleep(self.freq)
-                logging.info("market depth Size: {}, runtiime {} s".format(len(depth), time.time() - start_time))
-            except Exception as e:
-                logging.error("bitmex record get error: {}".format(e))
+        while True:
+            start_time = time.time()
+
+            ws.reconnect()
+
+            # load orderbook data
+            depth = ws.market_depth()
+            orderbook = stream_bitmex_to_orderbook(depth, freq=self.freq)
+            kafka_producer.send(self.cfg.kafka_topic_bitmex_orderbook,
+                                value=encode_kafka_msg(data=orderbook))
+            ws.exit()  # disconnect to reduce cpu usage
+
+            run_time = time.time() - start_time
+            sleep_time = max(0, self.freq - run_time)
+            sleep(sleep_time)
+            logging.info("market depth Size: {}, run_time {}s, sleep_time: {}s".format(len(depth), run_time, sleep_time))
 
 
 if __name__ == "__main__":
