@@ -17,8 +17,8 @@ data:
   csv_folder: "raw_data_prod"
   bitmex_orderbook:
     s3: "bitmex-orderbook"
-    freq: 5
-    symbols: ["XBTUSD", "ETHUSD", "ADAH20", "BCHH20", "EOSH20", "LTCH20", "TRXH20", "XRPH20"]
+    freq: 10
+    symbols: ["XBTUSD", "ETHUSD"]
 
 kafka:
   bootstrap_servers: "localhost:9092"

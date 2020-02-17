@@ -1,4 +1,6 @@
 # make file for goquant
+export AIRFLOW__SCHEDULER__MIN_FILE_PROCESS_INTERVAL=60 # Prevent airflow from reloading the dags all the time and set. This is the main setting that reduces CPU load in the scheduler
+export AIRFLOW__SCHEDULER__SCHEDULER_MAX_THREADS=1 # This should be set to (CPU Cores - 1)
 
 export PYTHONPATH = ${CURDIR}:$PYTHONPATH
 export AIRFLOW_HOME = ${CURDIR}/airflow

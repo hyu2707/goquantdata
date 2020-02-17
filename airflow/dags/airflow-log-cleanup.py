@@ -53,9 +53,6 @@ if hasattr(dag, 'catchup'):
 
 
 log_cleanup = """
-echo "Clean all Kafka logs.."
-rm -rf /tmp/kafka-logs/*
-
 echo "Clean Airflow logs..."
 echo "Getting Configurations..."
 BASE_LOG_FOLDER="{{params.directory}}"
