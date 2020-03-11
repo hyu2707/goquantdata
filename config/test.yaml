@@ -29,6 +29,7 @@ service:
 data:
   base_folder: "goquantdata"
   csv_folder: "raw_data_test"
+  ws_sleep_time: 0.5  # to avoid high cpu, it must smaller than freq
   bitmex_orderbook:
     s3: "bitmex-orderbook"
     freq: 5
