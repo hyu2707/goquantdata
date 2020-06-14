@@ -1,13 +1,14 @@
 [![codecov](https://codecov.io/gh/hyu2707/goquant/branch/master/graph/badge.svg)](https://codecov.io/gh/hyu2707/goquant)
 
 # goquant trading system
-Lightweight end-to-end trading system for US stock and crypto. Support market data, algorithm development and backtesting, live and paper trading. 
+Lightweight end-to-end trading system for US stock and crypto. Support market data, algorithm development and backtesting, live and paper trading. Compared to other system, the key feature of goquant is a could-based distribution system and can easily scale up.
 
 Key Tech Stacks:
 - Airflow: workflow orchestration
 - Kafka: msg queue, data communication
 - S3: cold data storage
-- EC2: host
+- EC2: service host
+- CloudWatch: monitoring and alerting
 
 ## Current Status
 
