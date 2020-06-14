@@ -3,6 +3,12 @@
 # goquant trading system
 Lightweight end-to-end trading system for US stock and crypto. Support market data, algorithm development and backtesting, live and paper trading. 
 
+Key Tech Stacks:
+- Airflow: workflow orchestration
+- Kafka: msg queue, data communication
+- S3: cold data storage
+- EC2: host
+
 ## Current Status
 
 ```diff
