@@ -16,8 +16,8 @@ from util.date import datestr_to_datetime
 class PolygonGateway(object):
     DATE_FMT = "%Y-%m-%d"
 
-    BASE_URL = "https://api.polygon.io/"
-    HISTORICAL_DATA_URL = "/v2/aggs/ticker/{symbol}/range/{multiplier}/{freq}/{start_date_str}/{end_date_str}"
+    BASE_URL = "https://api.polygon.io"
+    HISTORICAL_DATA_URL = "v2/aggs/ticker/{symbol}/range/{multiplier}/{freq}/{start_date_str}/{end_date_str}?apiKey={api_key}"
 
     VALID_FREQ = ["day", "minute", "hour"]
 
@@ -43,7 +43,9 @@ class PolygonGateway(object):
             multiplier=1,
             start_date_str=start_date_str,
             end_date_str=end_date_str,
+            api_key=self.api_key,
         )
+        logging.info("get data path: {}", path)
         res = self._request_api("get", path, unadjusted=unadjusted)
         res_data = res.get("results", None)
         if res_data is None:
