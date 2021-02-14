@@ -72,24 +72,24 @@ class TradingConfig(object):
             self.alpaca_key = self.priv_config["alpaca"]["key"]
             self.binance_api_key = self.priv_config["binance"]["key"]
             self.binance_secret_key = self.priv_config["binance"]["secret"]
-            self.aws_id = self.priv_config["aws"]["id"]
-            self.aws_key = self.priv_config["aws"]["key"]
-            self.bitmex_id = self.priv_config["bitmex"]["id"]
-            self.bitmex_key = self.priv_config["bitmex"]["key"]
+            # self.aws_id = self.priv_config["aws"]["id"]
+            # self.aws_key = self.priv_config["aws"]["key"]
+            # self.bitmex_id = self.priv_config["bitmex"]["id"]
+            # self.bitmex_key = self.priv_config["bitmex"]["key"]
 
-            self.airflow_email = self.priv_config["service"]["airflow"]["email"]
+            # self.airflow_email = self.priv_config["service"]["airflow"]["email"]
         else:
             self.alpaca_id = self.config["alpaca"]["id"]
             self.alpaca_key = self.config["alpaca"]["key"]
             self.binance_api_key = self.config["binance"]["key"]
             self.binance_secret_key = self.config["binance"]["secret"]
 
-            self.aws_id = self.config["aws"]["id"]
-            self.aws_key = self.config["aws"]["key"]
-            self.bitmex_id = self.config["bitmex"]["id"]
-            self.bitmex_key = self.config["bitmex"]["key"]
+            # self.aws_id = self.config["aws"]["id"]
+            # self.aws_key = self.config["aws"]["key"]
+            # self.bitmex_id = self.config["bitmex"]["id"]
+            # self.bitmex_key = self.config["bitmex"]["key"]
 
-            self.airflow_email = self.config["service"]["airflow"]["email"]
+            # self.airflow_email = self.config["service"]["airflow"]["email"]
 
         assert self.alpaca_id  # it's in priv.yaml
         assert self.alpaca_key  # it's in priv.yaml

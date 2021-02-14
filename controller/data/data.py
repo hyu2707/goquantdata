@@ -23,7 +23,7 @@ class GQData(object):
         self.binance = BinanceGateway()
         self.polygon = PolygonGateway()
         self.bitmex = BitmexGateway()
-        self.s3 = S3Gateway()
+        # self.s3 = S3Gateway()
         self.cfg = TradingConfig()
         self.alpaca.start()
         self.df_all = None
