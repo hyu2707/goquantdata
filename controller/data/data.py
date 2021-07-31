@@ -5,35 +5,33 @@ from datetime import datetime, timezone
 from util.logger import logger
 import shutil
 
-from gateway.alpaca import AlpacaGateway
 from entity.constants import *
 from config.config import TradingConfig
 
-from gateway.binance import BinanceGateway
 from gateway.bitmex import BitmexGateway
 from gateway.s3 import S3Gateway
 from gateway.polygon_gateway import PolygonGateway, PolygonRequestException
 from entity.mapper import binance_to_goquant, data_polygon_to_goquant, orderbook_to_orderbook_df
-from util.date import get_datetime_list_between, date_to_milliseconds, datestr_to_datetime
+from util.date import get_datetime_list_between, date_to_milliseconds
 
+
+STRING_FORMAT = "%Y%M%d"
 
 class GQData(object):
+
     def __init__(self):
-        self.alpaca = AlpacaGateway()
-        self.binance = BinanceGateway()
         self.polygon = PolygonGateway()
         self.bitmex = BitmexGateway()
         # self.s3 = S3Gateway()
         self.cfg = TradingConfig()
-        self.alpaca.start()
         self.df_all = None
 
     def get_data(self,
                  symbols,
                  freq,
                  start_date,
-                 end_date=datetime.now(timezone.utc),
-                 datasource=DATASOURCE_ALPACA,
+                 end_date=datetime.now(timezone.utc).strftime(STRING_FORMAT),
+                 datasource=DATASOURCE_POLYGON,
                  use_cache=True,
                  dict_output=False,
                  fill_nan_method=None,
@@ -74,8 +72,8 @@ class GQData(object):
                     freq, VALID_FREQ))
         logger.info("loading data...")
 
-        start_date = start_date.astimezone(pytz.utc)
-        end_date = end_date.astimezone(pytz.utc)
+        start_date = datetime.strptime(start_date, STRING_FORMAT).astimezone(pytz.utc)
+        end_date = datetime.strptime(end_date, STRING_FORMAT).astimezone(pytz.utc)
 
         # get cached data
         df_dict = {}
@@ -201,9 +199,11 @@ class GQData(object):
                            start_date, end_date, datasource, data_type):
         df_dict = {}
         if data_type == DATATYPE_TICKER:
-            if datasource == DATASOURCE_ALPACA:
-                df_dict = self._alpaca_get_prices(
+            if datasource == DATASOURCE_POLYGON:
+                df_dict = self._polygon_get_prices(
                     symbols, freq, start_date, end_date)
+            elif datasource == DATASOURCE_ALPACA:
+                raise Exception("alpaca data source is deprecated, please use polygon")
             elif datasource == DATASOURCE_BINANCE:
                 df_dict = self._binance_get_prices(
                     symbols=symbols,
@@ -224,7 +224,7 @@ class GQData(object):
 
         return df_dict
 
-    def _alpaca_get_prices(self, symbols, freq, start_datetime, end_datetime):
+    def _polygon_get_prices(self, symbols, freq, start_datetime, end_datetime):
         df_dict = {}
         for symbol in symbols:
             try:
@@ -235,8 +235,7 @@ class GQData(object):
                         PolygonGateway.DATE_FMT),
                     end_date_str=end_datetime.strftime(
                         PolygonGateway.DATE_FMT),
-                    unadjusted=False,
-                )
+                    unadjusted=False)
             except PolygonRequestException as err:
                 logger.warning(
                     "alpaca get error when load data, err:{}".format(err))

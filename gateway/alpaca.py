@@ -90,7 +90,7 @@ class AlpacaGateway(object):
             count -= 1
 
     @deprecated(
-        reason="alpaca data function has data limit, please use polygon data interface")
+        reason="alpaca data function has data limit, please use polygon data interface", version=1.0)
     def get_prices(self, symbols, freq='day', length=50):
         def get_barset(symbols):
             return self.api.get_barset(

@@ -1,7 +1,13 @@
 [![codecov](https://codecov.io/gh/hyu2707/goquant/branch/master/graph/badge.svg)](https://codecov.io/gh/hyu2707/goquant)
 
-# goquant trading system
-Lightweight end-to-end trading system for US stock and crypto. Support market data, algorithm development and backtesting, live and paper trading. Compared to other system, the key feature of goquant is a could-based distribution system and can easily scale up.
+# goquant offline quant system
+Python based offline quant system in AWS EC2. Mainly used for:
+- fetch and build historical market data database in s3
+- logging readltime streaming data to s3, such as orderbook (Airflow + Kafka)
+- offline worklfow pipeline for long running ML job (Airflow)
+- offline algorithm research
+
+For realtime online trading and backtesting system, please see goquant online quant system
 
 Key Tech Stacks:
 - Airflow: workflow orchestration
@@ -14,19 +20,7 @@ Key Tech Stacks:
 
 ```diff
 + [data] US stock: Polygon, minute-level, 2015 to now
-+ [backtest] PyAlgoTrade, stock
-+ [paperTrading] US stock: Alpaca
-+ [liveTrading] US stock: Alpaca
-
 + [data] crypto: Binance, minute-level, last 3 month
-+ [backtest] PyAlgoTrade, crypto
-- [paperTrading] crypto: Bitmex
-+ [liveTrading] crypto: Binance
-
-- [data] CN data source: None
-+ [backtest] PyAlgoTrade, stock
-- [paperTrading] CN stock: None
-- [liveTrading] CN stock: None
 ```
 
 ## Use Guide
