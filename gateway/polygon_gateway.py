@@ -19,11 +19,13 @@ class PolygonGateway(object):
     BASE_URL = "https://api.polygon.io"
     HISTORICAL_DATA_URL = "v2/aggs/ticker/{symbol}/range/{multiplier}/{freq}/{start_date_str}/{end_date_str}?apiKey={api_key}"
 
+    TICKERS_URL = "v3/reference/tickers"
+
     VALID_FREQ = ["day", "minute", "hour"]
 
     def __init__(self):
         self.cfg = TradingConfig()
-        self.api_key = self.cfg.alpaca_id
+        self.api_key = self.cfg.polygon_key
         self.session = self._init_session()
 
     def get_historical_data(
@@ -45,7 +47,7 @@ class PolygonGateway(object):
             end_date_str=end_date_str,
             api_key=self.api_key,
         )
-        logging.info("get data path: {}", path)
+        logging.info("get data path: {}".format(path))
         res = self._request_api("get", path, unadjusted=unadjusted)
         res_data = res.get("results", None)
         if res_data is None:
@@ -54,17 +56,37 @@ class PolygonGateway(object):
         res_df[POLYGON_SYMBOL] = symbol
         return res_df
 
+    def get_recent_universe_data(self):
+        next_url = self.TICKERS_URL
+        df = None
+        while next_url is not None:
+            if df is None:
+                res = self._request_api("get", next_url, limit=1000)
+            else:
+                res = self._request_api("get", next_url, True)
+            res_data = res.get("results", None)
+            next_url = res.get("next_url", None)
+            if res_data is not None:
+                cur_df = pd.DataFrame.from_records(res_data)
+                if df is None: df = cur_df
+                else: df = pd.concat([df, cur_df], sort=False)
+        return df
+
+
     def _init_session(self):
         session = requests.session()
         session.headers.update({'Accept': 'application/json'})
         return session
 
-    def _request_api(self, method, path, **kwargs):
+    def _request_api(self, method, path, is_next_page=False, **kwargs):
         api_kwargs = dict()
         api_kwargs["params"] = kwargs
         api_kwargs["params"]["apiKey"] = self.api_key
 
-        uri = "{}/{}".format(self.BASE_URL, path)
+        if not is_next_page:
+            uri = "{}/{}".format(self.BASE_URL, path)
+        else:
+            uri = path
         logging.debug("polygon send request: method: {}, uri_apikey:{}, api_kwargs:{}".format(
             method, uri, api_kwargs
         ))
