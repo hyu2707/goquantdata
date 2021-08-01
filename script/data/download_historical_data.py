@@ -35,9 +35,8 @@ if __name__ == "__main__":
 
     gqdata = GQData()
     df = gqdata.get_data(universe,
-                              args.freq,
-                              args.startdate,
-                              end_date=args.enddate,
-                              datasource=args.source,
-                              data_type=DATATYPE_TICKER)
-
+                         args.freq,
+                         args.startdate,
+                         end_date=args.enddate,
+                         datasource=args.source,
+                         data_type=DATATYPE_TICKER)
