@@ -28,6 +28,7 @@ def binance_to_goquant(symbol, in_data):
     df_binance[DATA_ADJCLOSE] = df_binance[DATA_CLOSE]
     return df_binance[DATA_HISTORICAL_COLS]
 
+
 def data_polygon_to_goquant(in_df):
     in_df[DATA_DATETIME] = pd.to_datetime(in_df[POLYGON_TS], unit='ms')
     in_df = in_df.set_index(DATA_DATETIME)
@@ -41,6 +42,20 @@ def data_polygon_to_goquant(in_df):
     }
     in_df = in_df.rename(columns=col_map)
     in_df[DATA_ADJCLOSE] = in_df[DATA_CLOSE]
+    return in_df[DATA_HISTORICAL_COLS]
+
+
+def data_alpaca_to_goquant(in_df, symbol):
+    col_map = {
+        ALPACA_VOLUME: DATA_VOLUME,
+        ALPACA_OPEN: DATA_OPEN,
+        ALPACA_CLOSE: DATA_CLOSE,
+        ALPACA_HIGH: DATA_HIGH,
+        ALPACA_LOW: DATA_LOW,
+    }
+    in_df = in_df.rename(columns=col_map)
+    in_df[DATA_ADJCLOSE] = in_df[DATA_CLOSE]
+    in_df[DATA_SYMBOL] = symbol
     return in_df[DATA_HISTORICAL_COLS]
 
 

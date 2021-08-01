@@ -96,7 +96,6 @@ class PolygonAPIException(Exception):
             self.message = 'Invalid JSON error message from Polygon: {}'.format(
                 response.text)
         else:
-            print(json_res)
             self.message = json_res['message']
         self.status_code = response.status_code
         self.response = response
