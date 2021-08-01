@@ -82,6 +82,20 @@ class GQData(object):
             logger.info("loaded done. symbol number {}, total rows: {}".format(len(df[DATA_SYMBOL].unique()), df.shape[0]))
         return df
 
+    def get_universe_data(self,
+                          datasource):
+        if datasource != DATASOURCE_POLYGON:
+            raise ValueError("only support polygon universe for now")
+
+        logger.info("loading data...")
+
+        df = self.polygon.get_recent_universe_data()
+        logger.info("loaded done. symbol number {}".format(df.shape[0]))
+        key = self.get_universe_key()
+        self.save_df(df, key)
+        return df
+
+
     def clean_cache(self):
         if os.path.exists(self.cfg.csv_data_path):
             shutil.rmtree(self.cfg.csv_data_path)
@@ -191,8 +205,11 @@ class GQData(object):
         key = DATA_FILE_FMT.format(type=data_type, freq=freq, dt=dt_str)
         return key
 
-    def save_df(self, df, data_key):
-        snapshot_path = self.get_data_snapshot_path(data_key)
+    def get_universe_key(self):
+        return UNIVERSE_DATA_FILE_FMT.format(type=DATATYPE_UNIVERSE)
+
+    def save_df(self, df, key):
+        snapshot_path = self.get_data_snapshot_path(key)
         if not os.path.exists(snapshot_path):
             os.makedirs(snapshot_path)
 

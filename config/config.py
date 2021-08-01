@@ -70,6 +70,7 @@ class TradingConfig(object):
 
             self.alpaca_id = self.priv_config["alpaca"]["id"]
             self.alpaca_key = self.priv_config["alpaca"]["key"]
+            self.polygon_key = self.priv_config["polygon"]["key"]
             self.binance_api_key = self.priv_config["binance"]["key"]
             self.binance_secret_key = self.priv_config["binance"]["secret"]
             # self.aws_id = self.priv_config["aws"]["id"]
@@ -81,6 +82,7 @@ class TradingConfig(object):
         else:
             self.alpaca_id = self.config["alpaca"]["id"]
             self.alpaca_key = self.config["alpaca"]["key"]
+            self.polygon_key = self.config["polygon"]["key"]
             self.binance_api_key = self.config["binance"]["key"]
             self.binance_secret_key = self.config["binance"]["secret"]
 

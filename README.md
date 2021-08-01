@@ -90,6 +90,8 @@ follow this format:
 alpaca:
   id: ""
   key: ""
+polygon:
+  key: ""
 binance:
   key: ""
   secret: ""
