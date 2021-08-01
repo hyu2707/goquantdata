@@ -3,91 +3,40 @@ official api: https://github.com/alpacahq/alpaca-trade-api-python/
 alpaca account can use polygon.io account
 https://polygon.io/docs/#getting-started
 """
-import time
+import logging
 from deprecated.sphinx import deprecated
 
 import alpaca_trade_api as tradeapi
 
 from config.config import TradingConfig
+from util.date import datestr_to_datetime
 from util.logger import logger
-from entity.mapper import order_goquant_to_alpaca
 
 
 class AlpacaGateway(object):
+    DATE_FMT = "%Y-%m-%d"
+
     def __init__(self):
         self.cfg = TradingConfig()
-        self.api = None
-
-    def start(self):
+        self.api_id = self.cfg.alpaca_id
+        self.api_key = self.cfg.alpaca_key
         self.api = tradeapi.REST(
             key_id=self.cfg.alpaca_id,
             secret_key=self.cfg.alpaca_key,
             base_url=self.cfg.alpaca_url,
-            api_version='v2'
-        )
-        pass
+            api_version='v2')
 
-    def trade(self, orders: list, wait=30):
-        '''
-        This is where we actually submit the orders and wait for them to fill.
-        Waiting is an important step since the orders aren't filled automatically,
-        which means if your buys happen to come before your sells have filled,
-        the buy orders will be bounced. In order to make the transition smooth,
-        we sell first and wait for all the sell orders to fill before submitting
-        our buy orders.
-        '''
+    def get_historical_data(self, symbol, freq, start_date_str, end_date_str):
+        # check input format
+        datestr_to_datetime(start_date_str, self.DATE_FMT)
+        datestr_to_datetime(end_date_str, self.DATE_FMT)
 
-        if len(orders) == 0:
-            logger.error("Orders is empty, return")
-            return
-        if self.api is None:
-            logger.error("please run start() first")
-            return
+        res_data = self.api.get_aggs(symbol, 1, freq, start_date_str, end_date_str)
 
-        alpaca_orders = [order_goquant_to_alpaca(o) for o in orders]
-
-        # process the sell orders first
-        sells = [o for o in alpaca_orders if o['side'] == 'sell']
-        for order in sells:
-            try:
-                logger.info(f'submit(sell): {order}')
-                self.api.submit_order(**order)
-            except Exception as e:
-                logger.error(e)
-        wait = wait // 2  # both sell and buy
-        count = wait
-        while count > 0:
-            pending = self.api.list_orders()
-            if len(pending) == 0:
-                logger.info(f'all sell orders done')
-                break
-            logger.info(
-                f'{len(pending)} sell orders pending... wait time {count}')
-            logger.debug("pending orders detail: {}".format(
-                [p.__dict__ for p in pending]))
-            time.sleep(1)
-            count -= 1
-
-        # process the buy orders next
-        buys = [o for o in alpaca_orders if o['side'] == 'buy']
-        for order in buys:
-            try:
-                logger.info(f'submit(buy): {order}')
-                self.api.submit_order(**order)
-            except Exception as e:
-                logger.error(e)
-        count = wait
-        while count > 0:
-            pending = self.api.list_orders()
-            if len(pending) == 0:
-                logger.info(f'all buy orders done')
-                break
-            logger.info(
-                f'{len(pending)} buy orders pending... wait time {count}')
-            logger.debug("pending orders detail: {}".format(
-                [p.__dict__ for p in pending]))
-            time.sleep(1)
-            count -= 1
+        if res_data is None:
+            raise Exception("alpaca get empty historical results")
+        res_df = res_data.df
+        return res_df
 
     @deprecated(
         reason="alpaca data function has data limit, please use polygon data interface", version=1.0)

@@ -1,25 +1,29 @@
 import pandas as pd
 import os
 import pytz
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from util.logger import logger
 import shutil
+from os import listdir
+from os.path import isfile, join
 
 from entity.constants import *
 from config.config import TradingConfig
 
 from gateway.bitmex import BitmexGateway
 from gateway.s3 import S3Gateway
+from gateway.alpaca import AlpacaGateway
 from gateway.polygon_gateway import PolygonGateway, PolygonRequestException
-from entity.mapper import binance_to_goquant, data_polygon_to_goquant, orderbook_to_orderbook_df
+from entity.mapper import binance_to_goquant, data_polygon_to_goquant, orderbook_to_orderbook_df, data_alpaca_to_goquant
 from util.date import get_datetime_list_between, date_to_milliseconds
 
 
-STRING_FORMAT = "%Y%M%d"
+STRING_FORMAT = "%Y%m%d"
 
 class GQData(object):
 
     def __init__(self):
+        self.alpaca = AlpacaGateway()
         self.polygon = PolygonGateway()
         self.bitmex = BitmexGateway()
         # self.s3 = S3Gateway()
@@ -32,10 +36,6 @@ class GQData(object):
                  start_date,
                  end_date=datetime.now(timezone.utc).strftime(STRING_FORMAT),
                  datasource=DATASOURCE_POLYGON,
-                 use_cache=True,
-                 dict_output=False,
-                 fill_nan_method=None,
-                 remove_nan_rows=True,
                  data_type=DATATYPE_TICKER):
         """
         get historical data
@@ -49,13 +49,6 @@ class GQData(object):
             end_date in YYYY-MM-DD format
         :param datasource: string
             data source
-        :param use_cache: bool
-            use saved file
-        :param fill_nan_method: string
-            fill nan method, default not fill, see more parameters here:
-            https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.fillna.html
-        :param remove_nan_rows: bool
-            remove nan rows after fill nan
         :param data_type: string
             ticker or orderbook
         :return: dataframe
@@ -65,97 +58,29 @@ class GQData(object):
             raise ValueError(
                 "datasource {} not in valid list {}".format(
                     datasource, VALID_DATASOURCE))
-
         if freq not in VALID_FREQ:
             raise ValueError(
                 "freq {} not in valid list {}".format(
                     freq, VALID_FREQ))
+        if len(symbols) == 0:
+            raise ValueError("symbols are empty")
         logger.info("loading data...")
 
-        start_date = datetime.strptime(start_date, STRING_FORMAT).astimezone(pytz.utc)
-        end_date = datetime.strptime(end_date, STRING_FORMAT).astimezone(pytz.utc)
+        start_date = datetime.strptime(start_date, STRING_FORMAT)
+        end_date = datetime.strptime(end_date, STRING_FORMAT)
 
-        # get cached data
-        df_dict = {}
-        load_symbol = []
-        if use_cache:
-            for symbol in symbols:
-                data_key = self.get_data_key(
-                    symbol, freq, start_date, end_date, data_type)
-                if self.check_data_key(data_key):
-                    cur_df = self.load_df(data_key)
-                    df_dict[symbol] = cur_df
-                else:
-                    load_symbol.append(symbol)
+        # loading data
+        if datasource == DATASOURCE_CACHE:
+            df = self._get_prices_cache(freq, start_date, end_date, data_type)
         else:
-            load_symbol = symbols
-
-        # get data from data provider
-        if len(load_symbol) > 0 and datasource != DATASOURCE_CACHE:
-            new_df_dict = self._get_prices_remote(
-                load_symbol, freq, start_date, end_date, datasource, data_type)
-            df_dict.update(new_df_dict)
-
-        # post-process data, such as data clean, fill nan
-        df_dict = self._post_process_data(df_dict, fill_nan_method=fill_nan_method, remove_nan_rows=remove_nan_rows)
-
-        # save output
-        if use_cache:
-            for symbol in df_dict:
-                data_key = self.get_data_key(
-                    symbol, freq, start_date, end_date, data_type)
-                self.save_df(df_dict[symbol], data_key, False)
-
-        logger.info("loaded done. symbol number {}".format(len(df_dict)))
-
-        if dict_output:
-            return df_dict
+            # get data from data provider
+            df = self._get_prices_remote(symbols, freq, start_date, end_date, datasource, data_type)
+            self._save_df(df, freq)
+        if df is None or df.shape[0] == 0:
+            logger.error("load empty data")
         else:
-            ret = None
-            for symbol in df_dict:
-                if ret is None:
-                    ret = df_dict[symbol]
-                else:
-                    ret = pd.concat([ret, df_dict[symbol]], sort=False)
-            return ret
-
-    def check_data_key(self, data_key):
-        filepath = self.get_data_file_path(data_key)
-        return os.path.isfile(filepath)
-
-    def get_data_key(self, symbol, freq, start_date, end_date, data_type=DATATYPE_TICKER):
-        start_date = start_date.astimezone(pytz.utc)
-        end_date = end_date.astimezone(pytz.utc)
-        start_date_str = start_date.strftime(TIME_FMT)
-        end_date_str = end_date.strftime(TIME_FMT)
-        key = DATA_FILE_FMT.format(
-            symbol=symbol, freq=freq, start_date=start_date_str, end_date=end_date_str, data_type=data_type)
-        return key
-
-    def save_df(self, df, data_key, overwrite=False):
-        if not os.path.exists(self.cfg.csv_data_path):
-            os.makedirs(self.cfg.csv_data_path)
-        filepath = self.get_data_file_path(data_key)
-        if not overwrite and os.path.isfile(filepath):
-            logger.debug("exist data file, skip: {}".format(filepath))
-        else:
-            logger.info("saving data file to: {}".format(filepath))
-            df.index.name = DATA_DATETIME
-            df.to_csv(filepath, date_format='%Y-%m-%d %H:%M:%S')
-
-    def load_df(self, data_key):
-        filepath = self.get_data_file_path(data_key)
-        if os.path.isfile(filepath):
-            logger.debug("loading data from file: {}".format(filepath))
-            df = pd.read_csv(filepath)
-            df[DATA_DATETIME] = pd.to_datetime(df[DATA_DATETIME])
-            df.set_index(DATA_DATETIME, inplace=True)
-            return df
-        else:
-            return None
-
-    def get_data_file_path(self, data_key):
-        return "{}/{}.csv".format(self.cfg.csv_data_path, data_key)
+            logger.info("loaded done. symbol number {}, total rows: {}".format(len(df[DATA_SYMBOL].unique()), df.shape[0]))
+        return df
 
     def clean_cache(self):
         if os.path.exists(self.cfg.csv_data_path):
@@ -195,22 +120,37 @@ class GQData(object):
 
         return ret_dict
 
-    def _get_prices_remote(self, symbols, freq,
-                           start_date, end_date, datasource, data_type):
+    def _get_prices_cache(self, freq, start_date, end_date, data_type):
+        dt_list = pd.date_range(start_date, end_date - timedelta(days=1), freq='d')
+        df = None
+        for dt in dt_list:
+            key = self.get_data_key(dt, freq, data_type)
+            cur_df = self.load_df(key)
+            if cur_df is None:
+                continue
+            if df is None:
+                df = cur_df
+            else:
+                df = pd.concat([df, cur_df], sort=False)
+        return df
+
+    def _get_prices_remote(self, symbols, freq, start_date, end_date, datasource, data_type,
+                           fill_nan_method=None,
+                           remove_nan_rows=True):
         df_dict = {}
         if data_type == DATATYPE_TICKER:
             if datasource == DATASOURCE_POLYGON:
                 df_dict = self._polygon_get_prices(
                     symbols, freq, start_date, end_date)
             elif datasource == DATASOURCE_ALPACA:
-                raise Exception("alpaca data source is deprecated, please use polygon")
+                df_dict = self._alpaca_get_prices(
+                    symbols, freq, start_date, end_date)
             elif datasource == DATASOURCE_BINANCE:
                 df_dict = self._binance_get_prices(
                     symbols=symbols,
                     freq=freq,
                     start_datetime=start_date,
-                    end_datetime=end_date,
-                )
+                    end_datetime=end_date)
             else:
                 logger.error("unsupported datasource: {}".format(datasource))
         elif data_type == DATATYPE_ORDERBOOK:
@@ -222,6 +162,86 @@ class GQData(object):
         else:
             logger.error("unsupported data_type: {}".format(data_type))
 
+        # post-process data, such as data clean, fill nan
+        df_dict = self._post_process_data(df_dict, fill_nan_method=fill_nan_method, remove_nan_rows=remove_nan_rows)
+
+        # merge dict to df
+        df = None
+        for symbol in df_dict:
+            if df is None:
+                df = df_dict[symbol]
+            else:
+                df = pd.concat([df, df_dict[symbol]], sort=False)
+        df['dt'] = df.index.date
+        return df
+
+    def _save_df(self, df, freq):
+        for dt in df['dt'].unique().tolist():
+            cur_df = df.loc[df['dt'] == dt].drop(['dt'], axis=1)
+            key = self.get_data_key(dt, freq, DATATYPE_TICKER)
+            self.save_df(cur_df, key)
+        return
+
+    def check_data_key(self, data_key):
+        snapshot_path = self.get_data_snapshot_path(data_key)
+        return os.path.exists(snapshot_path) and len(os.listdir(snapshot_path)) > 0
+
+    def get_data_key(self, dt, freq, data_type=DATATYPE_TICKER):
+        dt_str = dt.strftime(STRING_FORMAT)
+        key = DATA_FILE_FMT.format(type=data_type, freq=freq, dt=dt_str)
+        return key
+
+    def save_df(self, df, data_key):
+        snapshot_path = self.get_data_snapshot_path(data_key)
+        if not os.path.exists(snapshot_path):
+            os.makedirs(snapshot_path)
+
+        # save df into the dir
+        filepath = "{}/{}.csv".format(snapshot_path, datetime.now().strftime("%Y%m%d%H%M%S.%f"))
+        df.reset_index().rename(columns={'index': DATA_DATETIME}).to_csv(filepath, index=False)
+        logger.info("saved data: {}".format(filepath))
+
+    def load_df(self, data_key):
+        if not self.check_data_key(data_key):
+            logger.warning("missing data key in cache, dt: {}".format(data_key))
+            return None
+
+        snapshot_path = self.get_data_snapshot_path(data_key)
+        data_files = [join(snapshot_path, f) for f in os.listdir(snapshot_path) if isfile(join(snapshot_path, f))]
+        df = None
+        for filepath in data_files:
+            logger.debug("loading data from file: {}".format(filepath))
+            cur_df = pd.read_csv(filepath, index_col=False)
+            if df is None:
+                df = cur_df
+            else:
+                df = pd.concat([df, cur_df], sort=False)
+        if df is not None and df.shape[0] > 0:
+            df[DATA_DATETIME] = pd.to_datetime(df[DATA_DATETIME])
+            df = df.drop_duplicates()
+            df.set_index(DATA_DATETIME, inplace=True)
+        return df
+
+    def get_data_snapshot_path(self, data_key):
+        return "{}/{}".format(self.cfg.csv_data_path, data_key)
+
+    def _alpaca_get_prices(self, symbols, freq, start_datetime, end_datetime):
+        df_dict = {}
+        for symbol in symbols:
+            try:
+                cur_df = self.alpaca.get_historical_data(
+                    symbol=symbol,
+                    freq=freq,
+                    start_date_str=start_datetime.strftime(
+                        PolygonGateway.DATE_FMT),
+                    end_date_str=end_datetime.strftime(
+                        PolygonGateway.DATE_FMT))
+            except Exception as err:
+                logger.error(
+                    "alpaca get error when load data, err:{}".format(err))
+                continue
+            gq_cur_df = data_alpaca_to_goquant(cur_df, symbol)
+            df_dict[symbol] = gq_cur_df
         return df_dict
 
     def _polygon_get_prices(self, symbols, freq, start_datetime, end_datetime):
@@ -238,7 +258,7 @@ class GQData(object):
                     unadjusted=False)
             except PolygonRequestException as err:
                 logger.warning(
-                    "alpaca get error when load data, err:{}".format(err))
+                    "polygon get error when load data, err:{}".format(err))
                 continue
             gq_cur_df = data_polygon_to_goquant(cur_df)
             df_dict[symbol] = gq_cur_df

@@ -1,3 +1,4 @@
+import logging
 import argparse
 import csv
 from datetime import datetime, timezone
@@ -13,8 +14,15 @@ if __name__ == "__main__":
     parser.add_argument('--freq', type=str, help='frequency: day, minute')
     parser.add_argument('--universe_file', type=str, help='universe file path')
 
+    parser.add_argument("--debug", action='store_true', help="Set to debug mode. Example --debug'")
+
     args = parser.parse_args()
     print("input args: {}".format(args))
+
+    if args.debug is not None:
+        logging.basicConfig(level=logging.DEBUG)
+        logger = logging.getLogger(__name__)
+        logger.debug('Debug mode on')
 
     universe = []
     with open(args.universe_file, 'r') as f:
@@ -26,15 +34,10 @@ if __name__ == "__main__":
     print("universe: {}".format(universe))
 
     gqdata = GQData()
-    df_dict = gqdata.get_data(universe,
+    df = gqdata.get_data(universe,
                               args.freq,
                               args.startdate,
                               end_date=args.enddate,
                               datasource=args.source,
-                              use_cache=False,
-                              dict_output=False,
-                              fill_nan_method=None,
-                              remove_nan_rows=True,
                               data_type=DATATYPE_TICKER)
 
-    print("done, loaded {} symbols: {}".format(len(df_dict), df_dict.keys()))
