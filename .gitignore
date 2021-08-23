@@ -54,3 +54,6 @@ airflow/airflow.db-journal
 airflow/airflow-webserver.*
 airflow/airflow-scheduler.*
 
+flink/bin/
+flink/quantplatform/target/
+
