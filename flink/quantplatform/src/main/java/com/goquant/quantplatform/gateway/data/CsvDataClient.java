@@ -1,16 +1,31 @@
-package com.goquant.quantplatform.algomanager;
+package com.goquant.quantplatform.gateway.data;
 
+import com.goquant.quantplatform.entity.BarData;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple8;
 
+import java.time.Instant;
+import java.util.Set;
+
 // examples:
 // https://github.com/apache/flink/blob/master/flink-examples/flink-examples-batch/src/main/java/org/apache/flink/examples/java/relational/EmptyFieldsCountAccumulator.java
 // https://ci.apache.org/projects/flink/flink-docs-release-1.2/dev/batch/index.html
-public class AlgoManager {
-    public static void main(String[] args) throws Exception {
 
+public class CsvDataClient extends BaseDataClient {
+
+    public CsvDataClient() {
+
+    }
+
+    @Override
+    public BarData getBarData(Instant ts, Set<String> symbols) {
+        return null;
+    }
+
+    @Override
+    public void loadHistoricalDataSnapshot(Instant tsStart, Instant tsEnd) {
         String csvFile = "~/goquantdata/raw_data_dev/type=ticker/freq=day/dt=20210722/20210731183446.228075.csv";
         csvFile = csvFile.replaceFirst("^~", System.getProperty("user.home"));
 
@@ -27,8 +42,11 @@ public class AlgoManager {
                 .ignoreFirstLine()
                 .includeFields("10010")  // take the first and the fourth field
                 .types(String.class, Double.class);
-        csvInput.print();
+//        csvInput.print();
+
     }
+
+
 
     private static DataSet<StringTriple> getDataSet(
             ExecutionEnvironment env, String filePath) {
@@ -46,6 +64,4 @@ public class AlgoManager {
             super(f0, f1, f2, f3, f4, f5, f6, f7);
         }
     }
-
-
 }
