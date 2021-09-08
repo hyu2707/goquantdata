@@ -8,7 +8,7 @@ import java.time.format.DateTimeFormatter;
 public class Util {
 
     public static Instant stringDayToInstant(String DayStr) {
-        LocalDate date = LocalDate.parse(DayStr);
+        LocalDate date = LocalDate.parse(DayStr, DateTimeFormatter.ofPattern("uuuuMMdd"));
         return date.atStartOfDay(ZoneId.of("UTC")).toInstant();
     }
 

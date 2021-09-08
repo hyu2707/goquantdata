@@ -14,7 +14,7 @@ public class App {
     private static final Logger LOG = LoggerFactory.getLogger(App.class);
 
     public static void main(String[] args) {
-        Instant ts = Util.stringDayToInstant("2021-07-20");
+        Instant ts = Util.stringDayToInstant("20210722");
 
         GoquantConfig cfg;
         try {
