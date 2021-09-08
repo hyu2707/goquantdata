@@ -214,8 +214,8 @@ class GQData(object):
             os.makedirs(snapshot_path)
 
         # save df into the dir
-        filepath = "{}/{}.csv".format(snapshot_path, datetime.now().strftime("%Y%m%d%H%M%S.%f"))
-        df.reset_index().rename(columns={'index': DATA_DATETIME}).to_csv(filepath, index=False)
+        filepath = "{}/snapshot.dat".format(snapshot_path)
+        df = df.tz_convert(None).reset_index().rename(columns={'index': DATA_DATETIME}).to_csv(filepath, index=False)
         logger.info("saved data: {}".format(filepath))
 
     def load_df(self, data_key):
