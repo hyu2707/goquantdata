@@ -22,6 +22,8 @@ public class MemeAlgo extends BaseAlgo {
 
     @Override
     public Set<OrderData> onBar(BarData barData) {
+        LOG.debug("onBar called, data: {}", barData);
+
         return null;
     }
 

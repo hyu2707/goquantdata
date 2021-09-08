@@ -21,4 +21,13 @@ public class BarData {
             LOG.error("new row data ts not equal {} != {}", ts, data.ts);
         }
     }
+
+    @Override
+    public String toString(){
+        String ret = "";
+        for (String symbol : barDataMap.keySet()) {
+            ret += barDataMap.get(symbol).toString()+"\n";
+        }
+        return ret;
+    }
 }

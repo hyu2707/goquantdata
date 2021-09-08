@@ -29,8 +29,11 @@ public class AlgoExecutor {
                 algo.onDayStart();
             }
 
-            BarData barData = dataClient.getBarData(ts, algo.getSymbols());
+            // get input
+            BarData barData = dataClient.getBarData(ts);
+            // run algo to get order
             Set<OrderData> orderDataSet = algo.onBar(barData);
+            // submit order
             transactionClient.SubmitOrders(orderDataSet);
 
             if (isTsOnDayEnd(ts, algo)) {

@@ -9,8 +9,19 @@ public class RowData {
     public double high;
     public double low;
     public double close;
+    public double vol;
 
     public RowData() {}
+
+    public RowData(Instant ts, String symbol, double open, double high, double low, double close, double vol) {
+        this.ts = ts;
+        this.symbol = symbol;
+        this.open = open;
+        this.high = high;
+        this.low = low;
+        this.close = close;
+        this.vol = vol;
+    }
 
     public RowData setTs(Instant ts) {
         this.ts = ts;
@@ -40,5 +51,10 @@ public class RowData {
     public RowData setClose(double close) {
         this.close = close;
         return this;
+    }
+
+    @Override
+    public String toString(){
+        return String.format("t:%s,s:%s,o:%f,h:%f,l:%f,c:%f,v:%f",ts.toString(), symbol, open, high, low, close, vol);
     }
 }
