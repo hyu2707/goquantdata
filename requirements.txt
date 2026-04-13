@@ -3,7 +3,7 @@ PyYAML==5.4
 alpaca-trade-api==1.2.3
 ipykernel==5.1.2
 PyAlgoTrade==0.20
-pytest==5.2.4
+pytest==9.0.3
 coverage==4.5.4
 pytest-cov==2.8.1
 dateparser==0.7.0
